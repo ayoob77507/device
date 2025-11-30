@@ -5,38 +5,62 @@ const SHEET_ID = '1pyYZD3GwXQd-489Nl17Z_e_a7JYw40fa0KU_J0NRg2E/edit?gid=0#gid=0'
 const EMP_SHEET = 'Employees';
 const USER_SHEET = 'Users';
 
-function doGet(e){
-  const mode = e.parameter.mode;
-  if(mode === 'read') return readData();
-  if(mode === 'delete') return deleteRecord(e.parameter.id);
-  if(mode === 'login') return loginUser(e.parameter.user, e.parameter.pass);
-  return ContentService.createTextOutput('Invalid mode');
+function doGet(e) {
+  const output = handle(e);
+  return HtmlService
+    .createHtmlOutput(output)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+    .setContentSecurityPolicy("default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
 }
 
-function doPost(e){
-  const mode = e.parameter.mode || JSON.parse(e.postData.contents).mode || 'add';
-  const payload = JSON.parse(e.postData.contents);
-  if(mode === 'add') return addRecord(payload);
-  if(mode === 'update') return updateRecord(payload);
-  return ContentService.createTextOutput('Invalid POST mode');
+
+function doPost(e) {
+  const output = handle(e);
+  return HtmlService
+    .createHtmlOutput(output)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+    .setContentSecurityPolicy("default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
 }
+
+function handle(e) {
+  const mode = e.parameter.mode;
+
+  if (mode === "login")
+    return loginUser(e.parameter.user, e.parameter.pass);
+
+  if (mode === "read")
+    return JSON.stringify(readDataRaw());
+
+  if (mode === "delete")
+    return deleteRecord(e.parameter.id);
+
+  // POST modes
+  if (e.postData) {
+    const payload = JSON.parse(e.postData.contents);
+    if (payload.mode === "add") return addRecord(payload);
+    if (payload.mode === "update") return updateRecord(payload);
+  }
+
+  return "Invalid mode";
+}
+
 
 function openSheet(){
   return SpreadsheetApp.openById(SHEET_ID);
 }
 
-function readData(){
+function readDataRaw() {
   const ss = openSheet();
   const sh = ss.getSheetByName(EMP_SHEET);
-  if(!sh) return ContentService.createTextOutput('[]').setMimeType(ContentService.MimeType.JSON);
   const data = sh.getDataRange().getValues();
   const headers = data.shift();
-  const out = data.map(r=>{
-    const obj = {};
-    headers.forEach((h,i)=> obj[h] = r[i]);
-    return obj;
+  return data.map(row => {
+    const o = {};
+    headers.forEach((h, i) => o[h] = row[i]);
+    return o;
   });
-  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function addRecord(obj){
