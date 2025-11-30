@@ -1,22 +1,28 @@
 // Google Apps Script backend for Employee Management
-// Put this in Code.gs and deploy as Web App (Execute as: Me, Who has access: Anyone with link)
+// Deploy as Web App: Execute as Me, Access = Anyone
 
-const SHEET_ID = '1pyYZD3GwXQd-489Nl17Z_e_a7JYw40fa0KU_J0NRg2E/edit?gid=0#gid=0';
+const SHEET_ID = '1pyYZD3GwXQd-489Nl17Z_e_a7JYw40fa0KU_J0NRg2E/edit?gid=191518686#gid=191518686';   // فقط الـ ID
 const EMP_SHEET = 'Employees';
 const USER_SHEET = 'Users';
+
+// ==========================
+//   ROUTING (WITH CORS FIX)
+// ==========================
 
 function doGet(e) {
   return createCORSResponse(handle(e));
 }
 
-
-
 function doPost(e) {
   return createCORSResponse(handle(e));
 }
 
+// ==========================
+//      MAIN ROUTER
+// ==========================
+
 function handle(e) {
-  const mode = e.parameter.mode;
+  const mode = e.parameter.mode || "";
 
   if (mode === "login")
     return loginUser(e.parameter.user, e.parameter.pass);
@@ -27,12 +33,20 @@ function handle(e) {
   if (mode === "delete")
     return deleteRecord(e.parameter.id);
 
-  // POST
-  if (e.postData) {
+  // POST modes
+  if (e.postData && e.postData.contents) {
     const payload = JSON.parse(e.postData.contents);
+
     if (payload.mode === "add") return addRecord(payload);
     if (payload.mode === "update") return updateRecord(payload);
   }
+
+  return "Invalid mode";
+}
+
+// ==========================
+//     CORS FIX FUNCTION
+// ==========================
 
 function createCORSResponse(content) {
   return HtmlService
@@ -44,72 +58,82 @@ function createCORSResponse(content) {
     );
 }
 
-  return "Invalid mode";
-}
+// ==========================
+//      HELPER FUNCTIONS
+// ==========================
 
-
-  return "Invalid mode";
-}
-
-
-function openSheet(){
+function openSheet() {
   return SpreadsheetApp.openById(SHEET_ID);
 }
 
+// READ ALL EMPLOYEES
 function readDataRaw() {
   const ss = openSheet();
   const sh = ss.getSheetByName(EMP_SHEET);
   const data = sh.getDataRange().getValues();
   const headers = data.shift();
+
   return data.map(row => {
     const o = {};
-    headers.forEach((h, i) => o[h] = row[i]);
+    headers.forEach((h, i) => (o[h] = row[i]));
     return o;
   });
 }
 
-function addRecord(obj){
+// ADD NEW ROW
+function addRecord(obj) {
   const ss = openSheet();
   const sh = ss.getSheetByName(EMP_SHEET);
   const headers = sh.getDataRange().getValues()[0];
+
   const row = headers.map(h => obj[h] || '');
   sh.appendRow(row);
-  return ContentService.createTextOutput('Added');
+
+  return "Added";
 }
 
-function updateRecord(obj){
+// UPDATE EXISTING ROW
+function updateRecord(obj) {
   const ss = openSheet();
   const sh = ss.getSheetByName(EMP_SHEET);
   const data = sh.getDataRange().getValues();
   const headers = data[0];
-  for(let i=1;i<data.length;i++){
-    if(data[i][0] == obj[headers[0]]){
-      // found row to update
-      const newRow = headers.map(h=> obj[h] || '');
-      sh.getRange(i+1,1,1,newRow.length).setValues([newRow]);
-      return ContentService.createTextOutput('Updated');
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] == obj[headers[0]]) {
+
+      const newRow = headers.map(h => obj[h] || '');
+      sh.getRange(i + 1, 1, 1, newRow.length).setValues([newRow]);
+
+      return "Updated";
     }
   }
-  return ContentService.createTextOutput('Not found');
+  return "Not found";
 }
 
-function deleteRecord(id){
+// DELETE ROW
+function deleteRecord(id) {
   const ss = openSheet();
   const sh = ss.getSheetByName(EMP_SHEET);
   const data = sh.getDataRange().getValues();
-  for(let i=1;i<data.length;i++){
-    if(data[i][0] == id){ sh.deleteRow(i+1); return ContentService.createTextOutput('Deleted'); }
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] == id) {
+      sh.deleteRow(i + 1);
+      return "Deleted";
+    }
   }
-  return ContentService.createTextOutput('Not found');
+  return "Not found";
 }
 
-function loginUser(user, pass){
+// LOGIN CHECK
+function loginUser(user, pass) {
   const ss = openSheet();
   const sh = ss.getSheetByName(USER_SHEET);
-  if(!sh) return ContentService.createTextOutput('fail');
   const rows = sh.getDataRange().getValues();
-  for(let i=1;i<rows.length;i++){
-    if(rows[i][0] == user && rows[i][1] == pass) return ContentService.createTextOutput('ok');
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == user && rows[i][1] == pass) return "ok";
   }
-  return ContentService.createTextOutput('fail');
+  return "fail";
 }
