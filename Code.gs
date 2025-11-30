@@ -1,7 +1,7 @@
 // Google Apps Script backend for Employee Management
 // Deploy as Web App: Execute as Me, Access = Anyone
 
-const SHEET_ID = '1pyYZD3GwXQd-489Nl17Z_e_a7JYw40fa0KU_J0NRg2E/edit?gid=191518686#gid=191518686';   // فقط الـ ID
+const SHEET_ID = '1pyYZD3GwXQd-489Nl17Z_e_a7JYw40fa0KU_J0NRg2E';   // فقط الـ ID
 const EMP_SHEET = 'Employees';
 const USER_SHEET = 'Users';
 
@@ -133,7 +133,8 @@ function loginUser(user, pass) {
   const rows = sh.getDataRange().getValues();
 
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] == user && rows[i][1] == pass) return "ok";
+    if (rows[i][0] == user && rows[i][1] == pass)
+      return "ok";
   }
   return "fail";
 }
