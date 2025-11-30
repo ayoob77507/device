@@ -173,8 +173,18 @@ function doLogin(){
 }
 
 function loadData(){
-  fetch(`${API_BASE}?mode=read`).then(r=>r.json()).then(data=>{ employees = data; filtered = [...employees]; currentPage=1; render(); }).catch(e=>alert('failed'));
-}
+  fetch(`${API_BASE}?mode=read`)
+  .then(r => r.text())
+  .then(txt => {
+    let data;
+    try { data = JSON.parse(txt); }
+    catch(e){ console.error('Failed to parse read response', txt); data = []; }
+    employees = Array.isArray(data) ? data : [];
+    filtered = [...employees];
+    currentPage = 1;
+    render();
+  })
+  .catch(e => { console.error(e); alert('فشل تحميل البيانات'); });
 
 function render(){
   const tbody = qs('#empTable tbody'); tbody.innerHTML='';
