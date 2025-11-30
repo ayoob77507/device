@@ -223,7 +223,50 @@ function openView(empIdEnc){ const id=decodeURIComponent(empIdEnc); const rec=em
 
 function confirmDelete(empIdEnc){ if(!confirm('هل أنت متأكد من الحذف؟')) return; const id=decodeURIComponent(empIdEnc); fetch(`${API_BASE}?mode=delete&id=${encodeURIComponent(id)}`).then(r=>r.text()).then(txt=>{ if(txt.toLowerCase().includes('deleted')) loadData(); else alert('delete failed'); }).catch(e=>alert('error')) }
 
-qs('#saveBtn').addEventListener('click', ()=>{ const mode = qs('#formMode').value; const payload = { EmpID: qs('#f_empid').value.trim(), Name: qs('#f_name').value.trim(), Gender: qs('#f_gender').value, Address: qs('#f_address').value.trim(), Email: qs('#f_email').value.trim(), Contact: qs('#f_contact').value.trim(), Organization: qs('#f_org').value.trim(), Department: qs('#f_dept').value.trim(), Position: qs('#f_position').value.trim(), Website: qs('#f_website').value.trim() }; if(mode==='add'){ fetch(API_BASE+'?mode=add',{method:'POST',body:JSON.stringify(payload)}).then(r=>r.text()).then(()=>{ loadData(); new bootstrap.Modal(qs('#editModal')).hide(); }).catch(e=>alert('add failed')) } else { fetch(API_BASE+'?mode=update',{method:'POST',body:JSON.stringify(payload)}).then(r=>r.text()).then(()=>{ loadData(); new bootstrap.Modal(qs('#editModal')).hide(); }).catch(e=>alert('update failed')) } });
+qs('#saveBtn').addEventListener('click', ()=>{
+
+  const mode = qs('#formMode').value;
+
+  const payload = {
+    mode: mode,   // مهم كي يستقبله Code.gs
+    EmpID: qs('#f_empid').value.trim(),
+    Name: qs('#f_name').value.trim(),
+    Gender: qs('#f_gender').value,
+    Address: qs('#f_address').value.trim(),
+    Email: qs('#f_email').value.trim(),
+    Contact: qs('#f_contact').value.trim(),
+    Organization: qs('#f_org').value.trim(),
+    Department: qs('#f_dept').value.trim(),
+    Position: qs('#f_position').value.trim(),
+    Website: qs('#f_website').value.trim()
+  };
+
+  fetch(API_BASE, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.text())   // لأن الرد الآن نص وليس JSON
+  .then(txt => {
+
+    if (txt.trim().toLowerCase().includes("added") ||
+        txt.trim().toLowerCase().includes("updated")) {
+
+      loadData();
+      bootstrap.Modal.getInstance(qs('#editModal')).hide();
+
+    } else {
+      console.error("Server said:", txt);
+      alert("خطأ في العملية");
+    }
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert("فشل في الاتصال بالخادم");
+  });
+
+});
+
 
 function escapeHtml(s){ if(!s) return ''; return s.toString().replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]; }); }
 
