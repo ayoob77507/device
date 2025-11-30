@@ -6,13 +6,29 @@ const EMP_SHEET = 'Employees';
 const USER_SHEET = 'Users';
 
 function doGet(e) {
-  const output = handle(e);
-  return HtmlService
-    .createHtmlOutput(output)
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-    .setContentSecurityPolicy("default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
-}
+      // Your existing logic to handle the request parameters (e.g., mode, user, pass)
+      // For example:
+      // var mode = e.parameter.mode;
+      // var user = e.parameter.user;
+      // var pass = e.parameter.pass;
+
+      // ... process your request and generate a response ...
+      var responseData = { message: "Login successful!", user: e.parameter.user }; // Example response
+
+      // Create a TextOutput object
+      var output = ContentService.createTextOutput(JSON.stringify(responseData));
+
+      // Set the MIME type for JSON
+      output.setMimeType(ContentService.MimeType.JSON);
+
+      // IMPORTANT: Set the 'Access-Control-Allow-Origin' header
+      // Replace 'https://ayoob77507.github.io' with the exact origin of your web page.
+      // If you need to allow multiple origins, you would need more complex logic,
+      // but for a single origin, this is sufficient.
+      output.appendSetHeader('Access-Control-Allow-Origin', 'https://ayoob77507.github.io');
+
+      return output;
+    }
 
 
 function doPost(e) {
